@@ -1,93 +1,107 @@
 
-## Poisson-Distribution
+# Fitting Poisson  distribution
 
-## Name : Abhishek Kannan M
+# Aim : 
 
-## Register Number : 212224040007
-## Date: 16/3/26
+To fit poisson distribution for the arrival of objects per minute from the feeder
 
-## Aim: 
+# Software required :  
 
-To fit Poisson distribution for the arrival of objects per minute from the feeder. 
+Python and Visual component tool
 
-## Software required: 
+# Theory:
 
-Python and Visual Component Tool
+The Poisson distribution is the discrete probability distribution of the number of events occurring in a given time period, given the average number of times the event occurs over that time period.
 
-## Theory : 
+![image](https://user-images.githubusercontent.com/104613195/166248326-fd042076-8b0b-40c4-8b11-1d8e8fcb74db.png)
 
-1. The Poisson distribution gives the probability of a number of events occurring in a fixed interval of time or space when events occur independently and at a constant average rate (λ).
-2. The probability mass function (PMF) is:  
-<img width="1171" height="73" alt="image" src="https://github.com/user-attachments/assets/e28da9e9-3b3f-4969-baa9-2ff06c3358ba" />
-3. Here, λ = mean number of occurrences, and e = 2.718 (base of natural logarithm).
-4. The mean and variance of a Poisson distribution are both equal to λ.
-5. Applicable when events occur independently, singly, and at a constant rate.
-# Algorithm
-<img width="1144" height="412" alt="image" src="https://github.com/user-attachments/assets/6bf357bd-7ba2-4908-8c93-ef74e4747a4f" />
+ Conditions for Poisson Distribution:
 
-## Program :
+1. An event can occur any number of times during a time period.
+2. Events occur independently. I
+3. The rate of occurrence is constant.
+4. The probability of an event occurring is proportional to the length of the time period. 
+ 
+# Procedure :
 
-**_Name : INFANT JESUS S <br>
- Reg No : 212224240058 <br>
- Slot Name : T1 - B11 <br>
- [colab link](https://colab.research.google.com/drive/1FJQPuB9WKvaRo8KecZllJO37fo79b2Ne#scrollTo=ME59jFqoie_k&line=26&uniqifier=1)_**
+![image](https://user-images.githubusercontent.com/104613195/166251988-d0c53205-6080-4f7b-ae4c-398178586637.png)
 
-```py
+# Experiment :
+
+![image](https://user-images.githubusercontent.com/103921593/230282876-f4a5afbf-cac1-4648-a1b0-c78840638a8e.png)
+
+# Program :
+
+DEVELOPED BY: Abhishek Kannan M
+REG NO:212224040007
+```
 import numpy as np
 import math
-import scipy.stats
+from scipy.stats import chi2
 
+# Step 1: Input data
+data = list(map(int, input("Enter space-separated frequency values: ").split()))
 
-data = [int(i) for i in input("Enter the data with space: ").split()]
-length = len(data)
-M = max(data)
-x = []
-freq = []
+# Step 2: Basic statistics
+N = len(data)
+max_val = max(data)
 
+# Step 3: Frequency distribution (Observed)
+observed_freq = [data.count(i) for i in range(max_val + 1)]
+X = list(range(max_val + 1))  # X values
+total_freq = sum(observed_freq)
 
-for i in range(M+1):
-    freq.append(data.count(i))
-    x.append(i)
+# Step 4: Probability for each X based on observed data
+prob_obs = [f / total_freq for f in observed_freq]
 
-sum_freq = np.sum(freq)
+# Step 5: Compute mean (λ for Poisson) using dot product
+mean = np.inner(X, prob_obs)
 
-p = [freq[i]/sum_freq for i in range(M+1)]
+# Step 6: Compute expected probabilities & expected frequencies under Poisson
+expected_probs = []
+expected_freq = []
+chi_sq_components = []
 
+print("\nX\tP(X=x)\tObs.Freq\tExp.Freq\tChi^2")
+print("-" * 50)
 
-mean = np.inner(x, p)
+for x in X:
+    # Poisson probability formula: P(X = x) = e^(-λ) * λ^x / x!
+    poisson_prob = math.exp(-mean) * (mean ** x) / math.factorial(x)
+    exp_freq = poisson_prob * total_freq
+    chi_sq = ((observed_freq[x] - exp_freq) ** 2) / exp_freq if exp_freq > 0 else 0
 
-print("X    P(X=x)    Obser.freq   Expec.freq  xi")
-print()
+    expected_probs.append(poisson_prob)
+    expected_freq.append(exp_freq)
+    chi_sq_components.append(chi_sq)
 
-chi = 0
-for i in x:
-    p_i = (math.exp(-mean) * (mean**i)) / math.factorial(i)
-    e = p_i * sum_freq
-    xi = ((freq[i] - e)**2) / e
-    chi += xi
-    print(f"{i}   {p_i:.3f}       {freq[i]}        {e:.2f}        {xi:.3f}")
+    print(f"{x}\t{poisson_prob:.4f}\t{observed_freq[x]:>8}\t{exp_freq:>9.2f}\t{chi_sq:>7.2f}")
 
-print()
-print("Calculated chi square value:", f"{chi:.4f}")
+# Step 7: Calculate total Chi-square value
+calculated_chi_sq = sum(chi_sq_components)
+degrees_of_freedom = max_val  # df = k - 1 - 1 (mean estimated → one parameter)
+table_chi_sq = chi2.ppf(1 - 0.01, df=degrees_of_freedom)
 
+# Step 8: Hypothesis Testing
+print("-" * 50)
+print(f"Calculated Chi-square value: {calculated_chi_sq:.4f}")
+print(f"Critical Chi-square value (1% LOS, df={degrees_of_freedom}): {table_chi_sq:.4f}")
 
-table_chi2 = scipy.stats.chi2.ppf(1 - 0.01, df=M)
-print(f"Table value of chi square at 1% level is {table_chi2:.4f}")
-
-if chi < table_chi2:
-    print("✔ The data can be fitted in Poisson Distribution at 1% LOS")
+if calculated_chi_sq < table_chi_sq:
+    print(" The data *fits* the Poisson distribution at 1% level of significance.")
 else:
-    print("✘ The data cannot be fitted in Poisson Distribution at 1% LOS")
+    print(" The data *does not fit* the Poisson distribution at 1% level of significance.")
 ```
 
+ 
+
+# Output : 
+
+<img width="729" height="414" alt="Screenshot 2026-03-12 134419" src="https://github.com/user-attachments/assets/7bbfe71f-43d2-49a0-9a2d-d2ef5fe912ee" />
 
 
-## Output
 
-<img width="602" height="377" alt="image" src="https://github.com/user-attachments/assets/54206d5a-b1bb-4896-8a22-f09706a41284" />
+# Results
 
-
-
-## Result
-
-The Poisson Distribution is fitted for the objects arrived from feeder per minute and the data is tested using Chi-square test. 
+The Poisson distribution is fitted for the objects arrived from feeder per minute and the data is tested using Chi-square test. 
+ 
